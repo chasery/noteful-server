@@ -77,6 +77,18 @@ describe("Notes Endpoints", () => {
   });
 
   describe("GET /api/notes/:id", () => {
+    context("Given there are no notes", () => {
+      it("returns a 404", () => {
+        const noteId = 123456;
+
+        return supertest(app)
+          .get(`/api/notes/${noteId}`)
+          .expect(404, {
+            error: { message: "Note doesn't exist" },
+          });
+      });
+    });
+
     context("Given there are notes", () => {
       const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray();
@@ -95,6 +107,30 @@ describe("Notes Endpoints", () => {
         return supertest(app)
           .get(`/api/notes/${noteId}`)
           .expect(200, expectedNote);
+      });
+    });
+
+    context(`Given an XSS attack article`, () => {
+      const testFolders = makeFoldersArray();
+      const { maliciousNote, expectedNote } = makeMaliciousNote();
+
+      beforeEach("insert malicious note", () => {
+        return db
+          .into("noteful_folders")
+          .insert(testFolders)
+          .then(() => {
+            return db.into("noteful_notes").insert([maliciousNote]);
+          });
+      });
+
+      it("removes XSS attack content", () => {
+        return supertest(app)
+          .get(`/api/notes/${maliciousNote.id}`)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.note_name).to.eql(expectedNote.note_name);
+            expect(res.body.note_content).to.eql(expectedNote.note_content);
+          });
       });
     });
   });
