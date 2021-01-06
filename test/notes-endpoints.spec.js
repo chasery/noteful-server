@@ -37,7 +37,7 @@ describe("Notes Endpoints", () => {
       const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray();
 
-      beforeEach("insert notes", () => {
+      beforeEach("insert folders and notes", () => {
         return db
           .into("noteful_folders")
           .insert(testFolders)
@@ -72,6 +72,29 @@ describe("Notes Endpoints", () => {
             expect(res.body[0].note_name).to.eql(expectedNote.note_name);
             expect(res.body[0].note_content).to.eql(expectedNote.note_content);
           });
+      });
+    });
+  });
+
+  describe("GET /api/notes/:id", () => {
+    context("Given there are notes", () => {
+      const testFolders = makeFoldersArray();
+      const testNotes = makeNotesArray();
+
+      beforeEach("insert folders and notes", () => {
+        return db
+          .into("noteful_folders")
+          .insert(testFolders)
+          .then(() => db.into("noteful_notes").insert(testNotes));
+      });
+
+      it("returns a 200 and the requested note", () => {
+        const noteId = 2;
+        const expectedNote = testNotes[noteId - 1];
+
+        return supertest(app)
+          .get(`/api/notes/${noteId}`)
+          .expect(200, expectedNote);
       });
     });
   });

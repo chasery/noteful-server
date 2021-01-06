@@ -10,7 +10,7 @@ const NotesService = {
       .then((rows) => rows[0]);
   },
   getNoteByID(knex, id) {
-    return knex.select("*").from("noteful_notes").where("id", id);
+    return knex.select("*").from("noteful_notes").where("id", id).first();
   },
   deleteNote(knex, id) {},
   updateNote(knex, id, newNoteFields) {},
