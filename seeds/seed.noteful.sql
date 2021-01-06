@@ -6,7 +6,7 @@ INSERT INTO noteful_folders (folder_name)
   ('Spangley');
 
 -- Create mock notes
-INSERT INTO noteful_notes (note_name, date_created, folder_id, note_content)
+INSERT INTO noteful_notes (note_name, modified, folder_id, note_content)
   VALUES
   ('Dogs', '2019-01-03T00:00:00.000Z', 2,
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed iaculis ante fermentum est cursus, ut hendrerit dui pellentesque. Proin a est eget leo finibus blandit. Praesent eu gravida ante. Cras sit amet sagittis ex. Cras consectetur, sem efficitur tempus dignissim, odio magna lobortis magna, a finibus sem nisl eget mauris. Aenean sapien ipsum, blandit et nisi vehicula, gravida pharetra sapien. Mauris nec varius est, vitae venenatis lectus. Vestibulum scelerisque augue et ante tempus, vehicula imperdiet purus accumsan. Proin in volutpat nulla, quis tincidunt massa. Praesent efficitur risus in elit varius blandit. Praesent non mollis tellus, at dignissim est. Praesent nec lacus tristique, venenatis tortor quis, fringilla felis. Cras rhoncus, diam non elementum condimentum, nunc tellus fermentum enim, eget dapibus nunc sapien et ante. Nulla ut felis a arcu maximus condimentum sit amet eu eros. Curabitur vel viverra turpis, at ullamcorper diam.'),
