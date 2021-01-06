@@ -1,4 +1,6 @@
+const { expect } = require("chai");
 const knex = require("knex");
+const supertest = require("supertest");
 const app = require("../src/app");
 const { makeFoldersArray } = require("./folders.fixtures");
 const { makeNotesArray, makeMaliciousNote } = require("./notes.fixtures");
@@ -24,9 +26,9 @@ describe("Notes Endpoints", () => {
     db.raw("TRUNCATE noteful_notes, noteful_folders RESTART IDENTITY CASCADE")
   );
 
-  describe(`GET /api/notes`, () => {
-    context(`Given no notes`, () => {
-      it(`responds with 200 and an empty list`, () => {
+  describe("GET /api/notes", () => {
+    context("Given no notes", () => {
+      it("responds with 200 and an empty list", () => {
         return supertest(app).get("/api/notes").expect(200, []);
       });
     });
@@ -49,7 +51,7 @@ describe("Notes Endpoints", () => {
       });
     });
 
-    context(`Given an XSS attack note`, () => {
+    context("Given an XSS attack note", () => {
       const testFolders = makeFoldersArray();
       const { maliciousNote, expectedNote } = makeMaliciousNote();
 
@@ -64,13 +66,81 @@ describe("Notes Endpoints", () => {
 
       it("removes XSS attack content", () => {
         return supertest(app)
-          .get(`/api/notes`)
+          .get("/api/notes")
           .expect(200)
           .expect((res) => {
             expect(res.body[0].note_name).to.eql(expectedNote.note_name);
             expect(res.body[0].note_content).to.eql(expectedNote.note_content);
           });
       });
+    });
+  });
+
+  describe("POST /api/notes", () => {
+    const testFolders = makeFoldersArray();
+    const { maliciousNote, expectedNote } = makeMaliciousNote();
+
+    beforeEach("insert folders", () => {
+      return db.into("noteful_folders").insert(testFolders);
+    });
+
+    it("creates a note, responds with a 201, and returns the full note", () => {
+      const newNote = {
+        note_name: "BEET IT",
+        note_content: "Sometimes you just have to beet it.",
+        folder_id: 1,
+      };
+
+      return supertest(app)
+        .post("/api/notes")
+        .send(newNote)
+        .expect(201)
+        .expect((res) => {
+          expect(res.headers.location).to.eql(`/api/notes/${res.body.id}`);
+          expect(res.body.note_name).to.eql(newNote.note_name);
+          expect(res.body.note_content).to.eql(newNote.note_content);
+          expect(res.body.folder_id).to.eql(newNote.folder_id);
+          expect(res.body).to.have.property("id");
+          const expectedDate = new Intl.DateTimeFormat("en-US").format(
+            new Date()
+          );
+          const actualDate = new Intl.DateTimeFormat("en-US").format(
+            new Date(res.body.modified)
+          );
+          expect(actualDate).to.eql(expectedDate);
+        });
+    });
+
+    const requiredFields = ["note_name", "note_content", "folder_id"];
+
+    requiredFields.forEach((field) => {
+      const newNote = {
+        note_name: "BEET IT",
+        note_content: "Sometimes you just have to beet it.",
+        folder_id: 1,
+      };
+
+      it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+        delete newNote[field];
+
+        return supertest(app)
+          .post("/api/notes")
+          .send(newNote)
+          .expect(400, {
+            error: { message: `Missing '${field}' in request body` },
+          });
+      });
+    });
+
+    it("removes XSS attack content", () => {
+      return supertest(app)
+        .post("/api/notes")
+        .send(maliciousNote)
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.note_name).to.eql(expectedNote.note_name);
+          expect(res.body.note_content).to.eql(expectedNote.note_content);
+        });
     });
   });
 });
