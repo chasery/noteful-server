@@ -74,6 +74,27 @@ notesRouter
         res.status(204).end();
       })
       .catch(next);
+  })
+  .patch(jsonParser, (req, res, next) => {
+    const knexInstance = req.app.get("db");
+    const { note_name, note_content, folder_id } = req.body;
+    const noteToUpdate = { note_name, note_content, folder_id };
+
+    const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
+    if (numberOfValues === 0) {
+      return res.status(400).json({
+        error: {
+          message:
+            "Request body must contain either 'note_name', 'note_content' or 'folder_id'",
+        },
+      });
+    }
+
+    NotesService.updateNote(knexInstance, req.params.id, noteToUpdate)
+      .then((numRowsAffected) => {
+        res.status(204).end();
+      })
+      .catch(next);
   });
 
 module.exports = notesRouter;

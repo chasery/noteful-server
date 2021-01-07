@@ -230,4 +230,91 @@ describe("Notes Endpoints", () => {
       });
     });
   });
+
+  describe("PATCH /api/notes/:id", () => {
+    context("Given no notes", () => {
+      it("responds with a 404", () => {
+        const noteId = 123456;
+        const updatedNote = {
+          note_name: "BEET IT",
+          note_content: "Sometimes you just have to beet it.",
+          folder_id: 1,
+        };
+
+        return supertest(app)
+          .patch(`/api/notes/${noteId}`)
+          .send(updatedNote)
+          .expect(404, { error: { message: "Note doesn't exist" } });
+      });
+    });
+
+    context("Given there are notes", () => {
+      const testFolders = makeFoldersArray();
+      const testNotes = makeNotesArray();
+
+      beforeEach("insert folders and notes", () => {
+        return db
+          .into("noteful_folders")
+          .insert(testFolders)
+          .then(() => db.into("noteful_notes").insert(testNotes));
+      });
+
+      it("should return a 204 and update the note", () => {
+        const noteId = 2;
+        const updatedNote = {
+          note_name: "BEET IT",
+          note_content: "Sometimes you just have to beet it.",
+          folder_id: 1,
+        };
+        const expectedNote = {
+          ...testNotes[noteId - 1],
+          ...updatedNote,
+        };
+
+        return supertest(app)
+          .patch(`/api/notes/${noteId}`)
+          .send(updatedNote)
+          .expect(204)
+          .then((res) =>
+            supertest(app).get(`/api/notes/${noteId}`).expect(expectedNote)
+          );
+      });
+
+      it("should return a 204 and update the note", () => {
+        const noteId = 2;
+        const updatedNote = {
+          note_name: "BEET IT",
+        };
+        const expectedNote = {
+          ...testNotes[noteId - 1],
+          ...updatedNote,
+        };
+
+        return supertest(app)
+          .patch(`/api/notes/${noteId}`)
+          .send({
+            ...updatedNote,
+            fieldToIgnore: "this should not be in the GET response",
+          })
+          .expect(204)
+          .then((res) =>
+            supertest(app).get(`/api/notes/${noteId}`).expect(expectedNote)
+          );
+      });
+
+      it("responds with 400 when no required fields supplied", () => {
+        const noteId = 2;
+
+        return supertest(app)
+          .patch(`/api/notes/${noteId}`)
+          .send({ irrelevantField: "foo" })
+          .expect(400, {
+            error: {
+              message:
+                "Request body must contain either 'note_name', 'note_content' or 'folder_id'",
+            },
+          });
+      });
+    });
+  });
 });

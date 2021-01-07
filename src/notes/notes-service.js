@@ -20,7 +20,14 @@ const NotesService = {
       .first()
       .delete();
   },
-  updateNote(knex, id, newNoteFields) {},
+  updateNote(knex, id, newNoteFields) {
+    return knex
+      .select("*")
+      .from("noteful_notes")
+      .where("id", id)
+      .first()
+      .update(newNoteFields);
+  },
 };
 
 module.exports = NotesService;
