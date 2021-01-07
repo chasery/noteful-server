@@ -65,6 +65,15 @@ notesRouter
   })
   .get((req, res, next) => {
     res.json(serializeNote(res.note));
+  })
+  .delete((req, res, next) => {
+    const knexInstance = req.app.get("db");
+
+    NotesService.deleteNote(knexInstance, req.params.id)
+      .then(() => {
+        res.status(204).end();
+      })
+      .catch(next);
   });
 
 module.exports = notesRouter;

@@ -28,9 +28,8 @@ describe("Notes Endpoints", () => {
 
   describe("GET /api/notes", () => {
     context("Given no notes", () => {
-      it("responds with 200 and an empty list", () => {
-        return supertest(app).get("/api/notes").expect(200, []);
-      });
+      it("responds with 200 and an empty list", () =>
+        supertest(app).get("/api/notes").expect(200, []));
     });
 
     context("Given there are notes in the database", () => {
@@ -41,14 +40,11 @@ describe("Notes Endpoints", () => {
         return db
           .into("noteful_folders")
           .insert(testFolders)
-          .then(() => {
-            return db.into("noteful_notes").insert(testNotes);
-          });
+          .then(() => db.into("noteful_notes").insert(testNotes));
       });
 
-      it("responds with 200 and all of the notes", () => {
-        return supertest(app).get("/api/notes").expect(200, testNotes);
-      });
+      it("responds with 200 and all of the notes", () =>
+        supertest(app).get("/api/notes").expect(200, testNotes));
     });
 
     context("Given an XSS attack note", () => {
@@ -59,9 +55,7 @@ describe("Notes Endpoints", () => {
         return db
           .into("noteful_folders")
           .insert(testFolders)
-          .then(() => {
-            return db.into("noteful_notes").insert([maliciousNote]);
-          });
+          .then(() => db.into("noteful_notes").insert([maliciousNote]));
       });
 
       it("removes XSS attack content", () => {
@@ -110,7 +104,7 @@ describe("Notes Endpoints", () => {
       });
     });
 
-    context(`Given an XSS attack article`, () => {
+    context(`Given an XSS attack note`, () => {
       const testFolders = makeFoldersArray();
       const { maliciousNote, expectedNote } = makeMaliciousNote();
 
@@ -118,9 +112,7 @@ describe("Notes Endpoints", () => {
         return db
           .into("noteful_folders")
           .insert(testFolders)
-          .then(() => {
-            return db.into("noteful_notes").insert([maliciousNote]);
-          });
+          .then(() => db.into("noteful_notes").insert([maliciousNote]));
       });
 
       it("removes XSS attack content", () => {
@@ -139,9 +131,9 @@ describe("Notes Endpoints", () => {
     const testFolders = makeFoldersArray();
     const { maliciousNote, expectedNote } = makeMaliciousNote();
 
-    beforeEach("insert folders", () => {
-      return db.into("noteful_folders").insert(testFolders);
-    });
+    beforeEach("insert folders", () =>
+      db.into("noteful_folders").insert(testFolders)
+    );
 
     it("creates a note, responds with a 201, and returns the full note", () => {
       const newNote = {
@@ -200,6 +192,42 @@ describe("Notes Endpoints", () => {
           expect(res.body.note_name).to.eql(expectedNote.note_name);
           expect(res.body.note_content).to.eql(expectedNote.note_content);
         });
+    });
+  });
+
+  describe("DELETE /api/notes", () => {
+    context("Given no notes", () => {
+      it("responds with a 404", () => {
+        const noteId = 123456;
+
+        return supertest(app)
+          .delete(`/api/notes/${noteId}`)
+          .expect(404, { error: { message: "Note doesn't exist" } });
+      });
+    });
+
+    context("Given there are notes", () => {
+      const testFolders = makeFoldersArray();
+      const testNotes = makeNotesArray();
+
+      beforeEach("insert folders and notes", () => {
+        return db
+          .into("noteful_folders")
+          .insert(testFolders)
+          .then(() => db.into("noteful_notes").insert(testNotes));
+      });
+
+      it("should return a 204 and the note is deleted in the db", () => {
+        const noteId = 2;
+        const expectedNotes = testNotes.filter((note) => note.id !== noteId);
+
+        return supertest(app)
+          .delete(`/api/notes/${noteId}`)
+          .expect(204)
+          .then((res) =>
+            supertest(app).get("/api/notes").expect(expectedNotes)
+          );
+      });
     });
   });
 });
