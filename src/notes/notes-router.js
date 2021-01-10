@@ -77,8 +77,8 @@ notesRouter
   })
   .patch(jsonParser, (req, res, next) => {
     const knexInstance = req.app.get("db");
-    const { note_name, note_content, folder_id } = req.body;
-    const noteToUpdate = { note_name, note_content, folder_id };
+    const { note_name, note_content, folder_id, modified } = req.body;
+    const noteToUpdate = { note_name, note_content, folder_id, modified };
 
     const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
     if (numberOfValues === 0) {
